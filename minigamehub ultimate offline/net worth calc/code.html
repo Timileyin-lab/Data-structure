@@ -1,0 +1,310 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>🎮 Mini Game Hub — Ultimate Offline</title>
+  <meta name="description" content="Mini Game Hub: TicTacToe, Snake, RPS, Memory, Guess, 2048, Breakout, Flappy — offline, sounds, high scores, installable PWA." />
+  <style>
+    :root{--bg:#071034;--panel:#0e1126;--muted:#aab0d6;--text:#f7f8ff;--accent:#7c5cff;--accent2:#22d3ee;--card:#0e1122;--border:#232848}
+    *{box-sizing:border-box}html,body{height:100%}body{margin:0;font-family:system-ui,Segoe UI,Roboto,Arial;background:linear-gradient(180deg,#020217 0%,#071034 65%);color:var(--text)}
+    .wrap{max-width:1100px;margin:0 auto;padding:16px}
+    header{display:flex;align-items:center;justify-content:space-between;gap:12px}
+    .brand{display:flex;gap:12px;align-items:center;font-weight:800}
+    .dot{width:12px;height:12px;border-radius:50%;background:var(--accent2);box-shadow:0 0 12px var(--accent2)}
+    nav{display:flex;gap:8px;flex-wrap:wrap}
+    .tab{padding:8px 12px;border-radius:10px;border:1px solid var(--border);background:var(--panel);cursor:pointer}
+    .tab.active{background:linear-gradient(135deg,var(--accent),#4cc9f0);color:#05030b;border-color:transparent}
+    main{padding:18px 0}
+    .panel{background:linear-gradient(180deg,var(--panel),#0b0f22);border-radius:14px;padding:14px;border:1px solid var(--border);box-shadow:0 10px 30px rgba(0,0,0,.45);margin-bottom:16px}
+    .controls{display:flex;gap:8px;flex-wrap:wrap;margin:10px 0}
+    .btn{background:var(--accent);color:#06020c;border:none;padding:8px 12px;border-radius:10px;cursor:pointer;font-weight:700}
+    .btn.secondary{background:#25283f;color:var(--text);border:1px solid var(--border)}
+    .stat{display:inline-flex;gap:8px;align-items:center;padding:6px 10px;border-radius:999px;background:var(--card);border:1px solid var(--border)}
+    .grid{display:grid;gap:12px}
+    .ttt-board{width:min(92vw,360px);height:min(92vw,360px);display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:12px auto}
+    .ttt-cell{background:#0b0f26;border-radius:10px;border:1px solid var(--border);display:grid;place-items:center;font-size:2.6rem;cursor:pointer}
+    canvas{background:#0b0f26;border-radius:10px;border:1px solid var(--border);display:block;margin:0 auto}
+    .rps-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;max-width:600px;margin:0 auto}
+    .rps-card{background:#0b0f26;padding:14px;border-radius:12px;border:1px solid var(--border);text-align:center;cursor:pointer}
+    .memory-grid{display:grid;grid-template-columns:repeat(4,min(20vw,100px));gap:10px;justify-content:center}
+    .card{width:min(20vw,100px);height:min(20vw,100px);perspective:700px}
+    .card-inner{position:relative;width:100%;height:100%;transform-style:preserve-3d;transition:transform .35s}
+    .card.flipped .card-inner{transform:rotateY(180deg)}
+    .card-face{position:absolute;inset:0;display:grid;place-items:center;border-radius:10px;border:1px solid var(--border);backface-visibility:hidden}
+    .card-front{background:#0b0f26}
+    .card-back{background:#13173a;transform:rotateY(180deg)}
+    .guess-wrap{max-width:420px;margin:0 auto;display:grid;gap:10px}
+    input,select{background:#0b0f26;color:var(--text);border:1px solid var(--border);border-radius:10px;padding:8px}
+    footer{text-align:center;color:var(--muted);margin-top:18px}
+    /* 2048 */
+    .g2048{display:flex;flex-direction:column;align-items:center;gap:12px}
+    .board2048{display:grid;grid-template-columns:repeat(4,72px);gap:8px;background:#111428;padding:12px;border-radius:10px}
+    .tile{width:72px;height:72px;display:grid;place-items:center;border-radius:8px;font-weight:800;font-size:20px}
+    /* breakout */
+    .break-wrap{display:flex;flex-direction:column;align-items:center;gap:10px}
+    canvas.breakout{width:100%;max-width:640px;height:auto}
+    /* flappy */
+    .flappy-wrap{display:flex;flex-direction:column;align-items:center;gap:10px}
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <header>
+      <div class="brand"><div class="dot"></div><div>Mini Game Hub — Ultimate</div></div>
+      <nav id="tabs">
+        <button class="tab active" data-game="ttt">TicTacToe</button>
+        <button class="tab" data-game="snake">Snake</button>
+        <button class="tab" data-game="rps">RPS</button>
+        <button class="tab" data-game="memory">Memory</button>
+        <button class="tab" data-game="guess">Guess</button>
+        <button class="tab" data-game="g2048">2048</button>
+        <button class="tab" data-game="breakout">Breakout</button>
+        <button class="tab" data-game="flappy">Flappy</button>
+      </nav>
+    </header>
+
+    <main>
+      <!-- TTT -->
+      <section id="ttt" class="panel game">
+        <h2>Tic‑Tac‑Toe</h2>
+        <div class="ttt-board" id="tttBoard"></div>
+        <div class="controls"><span class="stat" id="tttTurn">Turn: X</span><button class="btn" id="tttReset">Reset</button>
+          <div style="margin-left:auto" class="stat">Best Wins: <strong id="tttHigh">0</strong></div></div>
+        <div class="muted" id="tttMsg"></div>
+      </section>
+
+      <!-- Snake -->
+      <section id="snake" class="panel game" style="display:none">
+        <h2>Snake</h2>
+        <canvas id="snakeCanvas" width="360" height="360"></canvas>
+        <div class="controls"><span class="stat">Score: <strong id="snakeScore">0</strong></span>
+        <button class="btn" id="snakeStart">Start</button><button class="btn secondary" id="snakePause">Pause</button>
+        <button class="btn" id="snakeReset">Reset</button>
+        <div style="margin-left:auto" class="stat">High: <strong id="snakeHigh">0</strong></div></div>
+        <div class="muted" id="snakeMsg"></div>
+      </section>
+
+      <!-- RPS -->
+      <section id="rps" class="panel game" style="display:none">
+        <h2>Rock Paper Scissors</h2>
+        <div class="rps-grid">
+          <div class="rps-card" data-move="rock">🪨<h3>Rock</h3></div>
+          <div class="rps-card" data-move="paper">📄<h3>Paper</h3></div>
+          <div class="rps-card" data-move="scissors">✂️<h3>Scissors</h3></div>
+        </div>
+        <div class="controls"><span class="stat">You: <strong id="youScore">0</strong></span>
+        <span class="stat">CPU: <strong id="cpuScore">0</strong></span>
+        <button class="btn" id="rpsReset">Reset</button>
+        <div style="margin-left:auto" class="stat">Your Best: <strong id="rpsHigh">0</strong></div></div>
+        <div class="muted" id="rpsMsg">Pick your move.</div>
+      </section>
+
+      <!-- Memory -->
+      <section id="memory" class="panel game" style="display:none">
+        <h2>Memory</h2>
+        <div class="memory-grid" id="memoryGrid"></div>
+        <div class="controls"><span class="stat">Moves: <strong id="memMoves">0</strong></span>
+        <span class="stat">Matches: <strong id="memMatches">0</strong></span>
+        <button class="btn" id="memReset">Reset</button>
+        <div style="margin-left:auto" class="stat">Best (Fewest Moves): <strong id="memHigh">—</strong></div></div>
+        <div class="muted" id="memMsg"></div>
+      </section>
+
+      <!-- Guess -->
+      <section id="guess" class="panel game" style="display:none">
+        <h2>Number Guess</h2>
+        <div class="guess-wrap">
+          <input id="guessInput" type="number" min="1" max="100" placeholder="Enter 1‑100" />
+          <div class="controls"><button class="btn" id="guessBtn">Guess</button><button class="btn secondary" id="guessNew">New Number</button>
+          <div style="margin-left:auto" class="stat">Best Streak: <strong id="guessHigh">0</strong></div></div>
+          <div class="muted" id="guessMsg">Start guessing…</div>
+        </div>
+      </section>
+
+      <!-- 2048 -->
+      <section id="g2048" class="panel game" style="display:none">
+        <h2>2048 (Lite)</h2>
+        <div class="g2048">
+          <div class="board2048" id="board2048"></div>
+          <div class="controls"><button class="btn" id="g2048New">New</button><div style="margin-left:auto" class="stat">Score: <strong id="g2048Score">0</strong></div>
+          <div class="stat">Best: <strong id="g2048High">0</strong></div></div>
+          <div class="muted" id="g2048Msg"></div>
+        </div>
+      </section>
+
+      <!-- Breakout -->
+      <section id="breakout" class="panel game" style="display:none">
+        <h2>Breakout</h2>
+        <div class="break-wrap">
+          <canvas id="breakoutCanvas" class="breakout" width="640" height="400"></canvas>
+          <div class="controls"><span class="stat">Score: <strong id="breakScore">0</strong></span>
+          <button class="btn" id="breakStart">Start</button><button class="btn secondary" id="breakReset">Reset</button>
+          <div style="margin-left:auto" class="stat">High: <strong id="breakHigh">0</strong></div></div>
+          <div class="muted" id="breakMsg"></div>
+        </div>
+      </section>
+
+      <!-- Flappy -->
+      <section id="flappy" class="panel game" style="display:none">
+        <h2>Flappy (Lite)</h2>
+        <div class="flappy-wrap">
+          <canvas id="flappyCanvas" width="480" height="360"></canvas>
+          <div class="controls"><button class="btn" id="flapStart">Start</button><button class="btn secondary" id="flapReset">Reset</button>
+          <div style="margin-left:auto" class="stat">High: <strong id="flapHigh">0</strong></div></div>
+          <div class="muted" id="flapMsg">Press Space or Click to flap.</div>
+        </div>
+      </section>
+
+    </main>
+
+    <footer>Ultimate hub — sounds, highscores, and installable as a PWA. (Offline ready)</footer>
+  </div>
+
+  <script>
+    /* ===== Utilities ===== */
+    const SOUND = (function(){
+      const ctx = new (window.AudioContext || window.webkitAudioContext)();
+      function beep(freq=440, dur=0.08, type='sine'){ const o=ctx.createOscillator(); const g=ctx.createGain(); o.type=type; o.frequency.value=freq; o.connect(g); g.connect(ctx.destination); g.gain.value=0.0001; o.start(); g.gain.exponentialRampToValueAtTime(0.12, ctx.currentTime+0.01); g.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime+dur); o.stop(ctx.currentTime+dur+0.02); }
+      function chord(){ beep(880,0.08,'sine'); beep(660,0.08,'sine'); }
+      return { beep, chord };
+    })();
+
+    function saveHigh(key,val){ try{ localStorage.setItem(key, JSON.stringify(val)); }catch(e){} }
+    function loadHigh(key,def){ try{ return JSON.parse(localStorage.getItem(key)) ?? def; }catch(e){ return def; } }
+
+    // PWA sw & manifest via blobs (single-file)
+    (function registerPWA(){
+      if('serviceWorker' in navigator){
+        const swCode = `self.addEventListener('install', e=>{self.skipWaiting();});self.addEventListener('activate', e=>{clients.claim();});self.addEventListener('fetch', e=>{ e.respondWith(fetch(e.request).catch(()=>caches.match(e.request)));});`;
+        const swBlob = new Blob([swCode], {type:'text/javascript'});
+        const swUrl = URL.createObjectURL(swBlob);
+        navigator.serviceWorker.register(swUrl).catch(()=>{});
+      }
+      const manifest = { name: 'Mini Game Hub', short_name:'GameHub', start_url:'.', display:'standalone', background_color:'#071034', description:'Offline mini games', icons:[] };
+      const mBlob = new Blob([JSON.stringify(manifest)],{type:'application/json'});
+      const mUrl = URL.createObjectURL(mBlob);
+      let link = document.createElement('link'); link.rel='manifest'; link.href = mUrl; document.head.appendChild(link);
+    })();
+
+    /* ===== Tabs ===== */
+    document.querySelectorAll('#tabs .tab').forEach(btn=>btn.addEventListener('click', ()=>{
+      document.querySelectorAll('#tabs .tab').forEach(b=>b.classList.remove('active'));
+      btn.classList.add('active');
+      const id = btn.dataset.game;
+      document.querySelectorAll('.panel').forEach(p=>p.style.display = p.id===id? 'block':'none');
+      SOUND.beep(600,0.06);
+    }));
+
+    /* ===== Tic Tac Toe ===== */
+    const tttBoardEl = document.getElementById('tttBoard'); const tttTurnEl = document.getElementById('tttTurn'); const tttMsgEl = document.getElementById('tttMsg'); const tttResetBtn = document.getElementById('tttReset');
+    let tttBoard = Array(9).fill(''), tttPlayer='X', tttOver=false; let tttWins = loadHigh('tttWins',{X:0,O:0}); document.getElementById('tttHigh').textContent = Math.max(tttWins.X, tttWins.O);
+    function tttRender(){ tttBoardEl.innerHTML=''; tttBoard.forEach((v,i)=>{ const cell=document.createElement('button'); cell.className='ttt-cell'; cell.textContent=v; cell.addEventListener('click', ()=>tttMove(i)); tttBoardEl.appendChild(cell);}); tttTurnEl.textContent=`Turn: ${tttPlayer}`; }
+    function tttMove(i){ if(tttOver||tttBoard[i]) return; tttBoard[i]=tttPlayer; const win = tttCheck(); if(win){ tttMsgEl.textContent = `${tttPlayer} wins!`; tttWins[tttPlayer]++; saveHigh('tttWins',tttWins); document.getElementById('tttHigh').textContent = Math.max(tttWins.X, tttWins.O); SOUND.chord(); tttOver=true; tttRender(); return; } if(tttBoard.every(Boolean)){ tttMsgEl.textContent=`Draw.`; SOUND.beep(300,0.06); tttOver=true; tttRender(); return; } tttPlayer = tttPlayer==='X'?'O':'X'; tttRender(); }
+    function tttCheck(){ const L=[[0,1,2],[3,4,5],[6,7,8],[0,3,6],[1,4,7],[2,5,8],[0,4,8],[2,4,6]]; return L.some(([a,b,c])=>tttBoard[a] && tttBoard[a]===tttBoard[b] && tttBoard[a]===tttBoard[c]); }
+    tttResetBtn.addEventListener('click', ()=>{ tttBoard=Array(9).fill(''); tttPlayer='X'; tttOver=false; tttMsgEl.textContent=''; tttRender(); SOUND.beep(800,0.05); }); tttRender();
+
+    /* ===== Snake ===== */
+    const cvs = document.getElementById('snakeCanvas'); const ctx = cvs.getContext('2d'); const scoreEl = document.getElementById('snakeScore'); const sStart = document.getElementById('snakeStart'); const sPause = document.getElementById('snakePause'); const sReset = document.getElementById('snakeReset'); const sHighEl = document.getElementById('snakeHigh');
+    const SIZE=12; const COLS=Math.floor(cvs.width/SIZE); const ROWS=Math.floor(cvs.height/SIZE);
+    let snake,dir,food,score,loop,paused,dead; let snakeHigh = loadHigh('snakeHigh',0); sHighEl.textContent = snakeHigh;
+    function snakeInit(){ snake=[{x:Math.floor(COLS/2),y:Math.floor(ROWS/2)}]; dir={x:1,y:0}; spawnFood(); score=0; scoreEl.textContent=score; paused=false; dead=false; draw(); }
+    function spawnFood(){ do{ food={x:Math.floor(Math.random()*COLS),y:Math.floor(Math.random()*ROWS)} } while(snake.some(p=>p.x===food.x&&p.y===food.y)); }
+    function draw(){ ctx.fillStyle='#0b0f26'; ctx.fillRect(0,0,cvs.width,cvs.height); ctx.fillStyle='#22d3ee'; ctx.fillRect(food.x*SIZE,food.y*SIZE,SIZE,SIZE); ctx.fillStyle='#7c5cff'; snake.forEach(p=>ctx.fillRect(p.x*SIZE,p.y*SIZE,SIZE,SIZE)); }
+    function step(){ const head={x:snake[0].x+dir.x,y:snake[0].y+dir.y}; if(head.x<0||head.y<0||head.x>=COLS||head.y>=ROWS) return gameOver(); if(snake.some(p=>p.x===head.x&&p.y===head.y)) return gameOver(); snake.unshift(head); if(head.x===food.x&&head.y===food.y){ score++; scoreEl.textContent=score; spawnFood(); SOUND.beep(900,0.05); if(score>snakeHigh){ snakeHigh=score; sHighEl.textContent=snakeHigh; saveHigh('snakeHigh',snakeHigh); } } else snake.pop(); draw(); }
+    function gameOver(){ clearInterval(loop); dead=true; sHighEl.textContent=snakeHigh; SOUND.beep(200,0.12); }
+    document.addEventListener('keydown', e=>{ if(dead) return; const k=e.key; if(k==='ArrowLeft'&&dir.x!==1)dir={x:-1,y:0}; else if(k==='ArrowUp'&&dir.y!==1)dir={x:0,y:-1}; else if(k==='ArrowRight'&&dir.x!==-1)dir={x:1,y:0}; else if(k==='ArrowDown'&&dir.y!==-1)dir={x:0,y:1}; });
+    sStart.addEventListener('click', ()=>{ if(dead) snakeInit(); if(loop) clearInterval(loop); loop=setInterval(()=>{ if(!paused) step(); },110); SOUND.beep(700,0.04); });
+    sPause.addEventListener('click', ()=>{ paused=!paused; sPause.textContent = paused? 'Resume':'Pause'; });
+    sReset.addEventListener('click', ()=>{ clearInterval(loop); snakeInit(); }); snakeInit();
+
+    /* ===== RPS ===== */
+    const rpsCards = document.querySelectorAll('.rps-card'); const youEl = document.getElementById('youScore'); const cpuEl = document.getElementById('cpuScore'); const rpsMsg = document.getElementById('rpsMsg'); const rpsReset = document.getElementById('rpsReset'); const rpsHighEl = document.getElementById('rpsHigh');
+    let you=0,cpu=0; let rpsHigh = loadHigh('rpsHigh',0); rpsHighEl.textContent = rpsHigh;
+    function cpuPick(){ return ['rock','paper','scissors'][Math.floor(Math.random()*3)]; }
+    function judge(a,b){ if(a===b) return 'draw'; if((a==='rock'&&b==='scissors')||(a==='paper'&&b==='rock')||(a==='scissors'&&b==='paper')) return 'you'; return 'cpu'; }
+    rpsCards.forEach(c=>c.addEventListener('click', ()=>{ const p=c.dataset.move; const cp=cpuPick(); const out=judge(p,cp); if(out==='you'){ you++; rpsMsg.textContent=`You:${p} vs CPU:${cp} → You win!`; } else if(out==='cpu'){ cpu++; rpsMsg.textContent=`You:${p} vs CPU:${cp} → CPU wins.`; } else rpsMsg.textContent=`You:${p} vs CPU:${cp} → Draw.`; youEl.textContent=you; cpuEl.textContent=cpu; if(you>rpsHigh){ rpsHigh=you; rpsHighEl.textContent=rpsHigh; saveHigh('rpsHigh',rpsHigh);} if(you>=5||cpu>=5){ SOUND.chord(); rpsMsg.textContent += you>cpu ? ' You reached 5! 🎉' : ' CPU reached 5! 🤖'; } SOUND.beep(600,0.04); }));
+    rpsReset.addEventListener('click', ()=>{ you=0; cpu=0; youEl.textContent=0; cpuEl.textContent=0; rpsMsg.textContent='Pick your move.'; });
+
+    /* ===== Memory ===== */
+    const memGrid = document.getElementById('memoryGrid'); const memMovesEl = document.getElementById('memMoves'); const memMatchesEl = document.getElementById('memMatches'); const memResetBtn = document.getElementById('memReset'); const memMsg = document.getElementById('memMsg'); const memHighEl = document.getElementById('memHigh');
+    const MEM_ICONS=['🍎','🍌','🍇','🍓','🍊','🥝','🍍','🍉']; let memDeck=[],memFirst=null,memSecond=null,lock=false,moves=0,matches=0; let memHigh = loadHigh('memHigh',null); memHighEl.textContent = memHigh?memHigh:'—';
+    function memShuffle(a){ for(let i=a.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [a[i],a[j]]=[a[j],a[i]];} }
+    function memInit(){ memDeck=[...MEM_ICONS,...MEM_ICONS].map((icon,i)=>({id:i+'_'+icon,icon,matched:false})); memShuffle(memDeck); moves=0;matches=0;memFirst=null;memSecond=null;lock=false; memMovesEl.textContent=0; memMatchesEl.textContent=0; memGrid.innerHTML=''; memMsg.textContent=''; memDeck.forEach(c=>memGrid.appendChild(memCreate(c))); }
+    function memCreate(c){ const el=document.createElement('div'); el.className='card'; el.dataset.id=c.id; const inner=document.createElement('div'); inner.className='card-inner'; const front=document.createElement('div'); front.className='card-face card-front'; front.textContent='❓'; const back=document.createElement('div'); back.className='card-face card-back'; back.textContent=c.icon; inner.append(front,back); el.appendChild(inner); el.addEventListener('click', ()=>memFlip(el,c)); return el; }
+    function memFlip(el,card){ if(lock||card.matched||el.classList.contains('flipped')) return; el.classList.add('flipped'); if(!memFirst){ memFirst={el,card}; } else { memSecond={el,card}; lock=true; moves++; memMovesEl.textContent=moves; memCheck(); } }
+    function memCheck(){ if(memFirst.card.icon===memSecond.card.icon){ memFirst.card.matched=memSecond.card.matched=true; matches++; memMatchesEl.textContent=matches; SOUND.beep(900,0.05); memResetTurn(); if(matches===MEM_ICONS.length){ memMsg.textContent='Board cleared!'; if(!memHigh||moves<memHigh){ memHigh=moves; memHighEl.textContent=memHigh; saveHigh('memHigh',memHigh);} } } else { setTimeout(()=>{ memFirst.el.classList.remove('flipped'); memSecond.el.classList.remove('flipped'); memResetTurn(); },700); } }
+    function memResetTurn(){ memFirst=null; memSecond=null; lock=false; }
+    memResetBtn.addEventListener('click', memInit); memInit();
+
+    /* ===== Guessing ===== */
+    const gInput=document.getElementById('guessInput'); const gBtn=document.getElementById('guessBtn'); const gNew=document.getElementById('guessNew'); const gMsg=document.getElementById('guessMsg'); const guessHighEl=document.getElementById('guessHigh'); let target,streak=0,guessHigh=loadHigh('guessHigh',0); guessHighEl.textContent=guessHigh;
+    function newTarget(){ target=Math.floor(Math.random()*100)+1; gMsg.textContent='New game! Guess 1-100.'; gInput.value=''; gInput.focus(); }
+    function guess(){ const v=Number(gInput.value); if(!v||v<1||v>100){ gMsg.textContent='Please enter a number 1-100.'; return; } if(v===target){ streak++; gMsg.textContent='Correct! 🎉'; SOUND.chord(); if(streak>guessHigh){ guessHigh=streak; guessHighEl.textContent=guessHigh; saveHigh('guessHigh',guessHigh);} } else { streak=0; gMsg.textContent = v<target? 'Too low':'Too high'; SOUND.beep(300,0.06); } }
+    gBtn.addEventListener('click', guess); gInput.addEventListener('keydown', e=>{ if(e.key==='Enter') guess(); }); gNew.addEventListener('click', ()=>{ newTarget(); streak=0; }); newTarget();
+
+    /* ===== 2048 ===== */
+    const boardEl=document.getElementById('board2048'); const g2048ScoreEl=document.getElementById('g2048Score'); const g2048HighEl=document.getElementById('g2048High'); const g2048Msg=document.getElementById('g2048Msg'); let g2048Grid=[],g2048Score=0,g2048High=loadHigh('g2048High',0); g2048HighEl.textContent=g2048High;
+    function g2048Init(){ g2048Grid=Array.from({length:16},()=>0); placeRandom(); placeRandom(); render2048(); g2048Score=0; g2048ScoreEl.textContent=g2048Score; g2048Msg.textContent='Use arrow keys to move tiles.'; }
+    function placeRandom(){ const empties=g2048Grid.map((v,i)=>v===0?i:-1).filter(i=>i!==-1); if(!empties.length) return; const idx=empties[Math.floor(Math.random()*empties.length)]; g2048Grid[idx]=Math.random()<0.9?2:4; }
+    function render2048(){ boardEl.innerHTML=''; g2048Grid.forEach(v=>{ const d=document.createElement('div'); d.className='tile'; d.style.background = v? '#2b2f52':'#0b0f26'; d.textContent = v? v : ''; boardEl.appendChild(d); }); }
+    function rotateGrid(grid){ const out=[]; for(let c=0;c<4;c++){ for(let r=3;r>=0;r--){ out.push(grid[r*4 + c] || 0); } } return out; }
+    function slideLeft(grid){ let moved=false; let scoreAdd=0; const out=[]; for(let r=0;r<4;r++){ const row=grid.slice(r*4,r*4+4).filter(x=>x); for(let i=0;i<row.length-1;i++){ if(row[i]===row[i+1]){ row[i]=row[i]*2; scoreAdd+=row[i]; row.splice(i+1,1); } } while(row.length<4) row.push(0); out.push(...row); if(out.slice(r*4,r*4+4).join()!=grid.slice(r*4,r*4+4).join()) moved=true; } return {grid:out,moved,scoreAdd}; }
+    function move2048(dir){ let g = [...g2048Grid]; if(dir===1){ g=rotateGrid(g); } else if(dir===2){ g=g.reverse(); } else if(dir===3){ g=rotateGrid(g.reverse()); }
+      const res = slideLeft(g); g = res.grid; let moved = res.moved; g2048Score += res.scoreAdd; if(dir===1){ g=rotateGrid(rotateGrid(rotateGrid(g))); } else if(dir===2){ g=g.reverse(); } else if(dir===3){ g=g.reverse(); g=rotateGrid(g); g=rotateGrid(g); g=rotateGrid(g); }
+      if(moved){ g2048Grid = g; placeRandom(); render2048(); g2048ScoreEl.textContent=g2048Score; if(g2048Score>g2048High){ g2048High=g2048Score; g2048HighEl.textContent=g2048High; saveHigh('g2048High',g2048High);} SOUND.beep(500,0.04); }
+    }
+    document.addEventListener('keydown', e=>{ if(document.getElementById('g2048').style.display==='none') return; if(e.key==='ArrowLeft'){ move2048(0);} else if(e.key==='ArrowUp'){ move2048(1);} else if(e.key==='ArrowRight'){ move2048(2);} else if(e.key==='ArrowDown'){ move2048(3);} });
+    document.getElementById('g2048New').addEventListener('click', ()=>{ g2048Init(); }); g2048Init();
+
+    /* ===== Breakout ===== */
+    const bCanvas = document.getElementById('breakoutCanvas'); const bCtx = bCanvas.getContext('2d'); const breakScoreEl = document.getElementById('breakScore'); const breakStart = document.getElementById('breakStart'); const breakReset = document.getElementById('breakReset'); const breakHighEl = document.getElementById('breakHigh'); const breakMsg = document.getElementById('breakMsg'); let breakHigh = loadHigh('breakHigh',0); breakHighEl.textContent = breakHigh;
+    const BRICK_ROWS = 5; const BRICK_COLS = 8; const BRICK_W = Math.floor(bCanvas.width / BRICK_COLS) - 6; const BRICK_H = 18;
+    let bricks = [], paddle, ballB, bLoop, bScore, bLives, bPlaying;
+    function breakoutInit(){ bricks = []; for(let r=0;r<BRICK_ROWS;r++){ for(let c=0;c<BRICK_COLS;c++){ bricks.push({x: c*(BRICK_W+6)+4, y: 40 + r*(BRICK_H+6), w: BRICK_W, h: BRICK_H, alive:true, color: `hsl(${r*40},70%,55%)`}); } }
+      paddle = { w: 100, h: 12, x: (bCanvas.width-100)/2, y: bCanvas.height - 36, speed:8 };
+      ballB = { x: bCanvas.width/2, y: paddle.y - 10, r:7, vx:4, vy:-4 };
+      bScore = 0; bLives = 3; bPlaying=false; breakScoreEl.textContent=bScore; breakMsg.textContent='Click Start'; drawBreak(); }
+    function drawBreak(){ bCtx.fillStyle='#0b0f26'; bCtx.fillRect(0,0,bCanvas.width,bCanvas.height); bricks.forEach(br=>{ if(br.alive){ bCtx.fillStyle=br.color; bCtx.fillRect(br.x,br.y,br.w,br.h); bCtx.strokeStyle='#071426'; bCtx.strokeRect(br.x,br.y,br.w,br.h); } }); bCtx.fillStyle='#22d3ee'; bCtx.fillRect(paddle.x,paddle.y,paddle.w,paddle.h); bCtx.beginPath(); bCtx.arc(ballB.x,ballB.y,ballB.r,0,Math.PI*2); bCtx.fillStyle='#f7f8ff'; bCtx.fill(); }
+    function breakStep(){ if(!bPlaying) return; ballB.x += ballB.vx; ballB.y += ballB.vy; // wall
+      if(ballB.x<ballB.r || ballB.x> bCanvas.width - ballB.r) { ballB.vx *= -1; SOUND.beep(800,0.03); }
+      if(ballB.y<ballB.r) { ballB.vy *= -1; SOUND.beep(700,0.03); }
+      if(ballB.y > bCanvas.height){ bLives--; SOUND.beep(200,0.12); if(bLives<=0){ bPlaying=false; breakMsg.textContent='Game Over'; if(bScore>breakHigh){ breakHigh=bScore; breakHighEl.textContent=breakHigh; saveHigh('breakHigh',breakHigh); } clearInterval(bLoop);} else { resetBall(); } }
+      // paddle collision
+      if(ballB.y + ballB.r >= paddle.y && ballB.x > paddle.x && ballB.x < paddle.x + paddle.w && ballB.vy>0){ ballB.vy *= -1; ballB.vx += (ballB.x - (paddle.x + paddle.w/2))/20; SOUND.beep(900,0.03); }
+      // brick collision
+      bricks.forEach(br=>{ if(br.alive && ballB.x > br.x && ballB.x < br.x+br.w && ballB.y - ballB.r < br.y+br.h && ballB.y + ballB.r > br.y){ br.alive=false; bScore+=10; breakScoreEl.textContent=bScore; ballB.vy *= -1; SOUND.beep(1000,0.03); } });
+      drawBreak(); if(bricks.every(b=>!b.alive)){ bPlaying=false; breakMsg.textContent='You Win!'; SOUND.chord(); if(bScore>breakHigh){ breakHigh=bScore; breakHighEl.textContent=breakHigh; saveHigh('breakHigh',breakHigh); } clearInterval(bLoop);} }
+    function resetBall(){ ballB.x = bCanvas.width/2; ballB.y = paddle.y - 10; ballB.vx = 4*(Math.random()>0.5?1:-1); ballB.vy = -4; drawBreak(); }
+    document.addEventListener('mousemove', e=>{ const rect = bCanvas.getBoundingClientRect(); const mx = e.clientX - rect.left; if(mx) paddle.x = Math.max(0, Math.min(bCanvas.width - paddle.w, mx - paddle.w/2)); });
+    breakStart.addEventListener('click', ()=>{ if(bPlaying) return; bPlaying=true; if(bLoop) clearInterval(bLoop); bLoop = setInterval(breakStep, 20); SOUND.beep(700,0.04); });
+    breakReset.addEventListener('click', ()=>{ clearInterval(bLoop); breakoutInit(); }); breakoutInit();
+
+    /* ===== Flappy ===== */
+    const fCanvas = document.getElementById('flappyCanvas'); const fCtx = fCanvas.getContext('2d'); const flapStart = document.getElementById('flapStart'); const flapReset = document.getElementById('flapReset'); const flapHighEl = document.getElementById('flapHigh'); const flapMsg = document.getElementById('flapMsg'); let flapHigh = loadHigh('flapHigh',0); flapHighEl.textContent=flapHigh;
+    let bird, pipes, fLoop, fScore, fPlaying, gravity=0.45;
+    function flappyInit(){ bird={x:80,y:fCanvas.height/2, w:28, h:20, vy:0}; pipes=[]; fScore=0; fPlaying=false; flapMsg.textContent='Click Start'; renderFlappy(); }
+    function spawnPipe(){ const gap=100; const topH = 40 + Math.random()*(fCanvas.height-220); pipes.push({x:fCanvas.width, top:topH, gap:gap, passed:false}); }
+    function renderFlappy(){ fCtx.fillStyle='#0b0f26'; fCtx.fillRect(0,0,fCanvas.width,fCanvas.height); // bird
+      fCtx.fillStyle='#f59e0b'; fCtx.fillRect(bird.x,bird.y,bird.w,bird.h); // pipes
+      fCtx.fillStyle='#27ae60'; pipes.forEach(p=>{ fCtx.fillRect(p.x,0,50,p.top); fCtx.fillRect(p.x,p.top+p.gap,50,fCanvas.height-(p.top+p.gap)); }); // score
+      fCtx.fillStyle='#f7f8ff'; fCtx.font='20px monospace'; fCtx.fillText('Score: '+fScore, 10, 24);
+    }
+    function flappyStep(){ if(!fPlaying) return; bird.vy += gravity; bird.y += bird.vy; if(Math.random()<0.02){} // chance to spawn
+      if(pipes.length===0 || pipes[pipes.length-1].x < fCanvas.width - 180) spawnPipe(); pipes.forEach(p=>{ p.x -= 2.6; if(!p.passed && p.x + 50 < bird.x){ p.passed=true; fScore++; if(fScore>flapHigh){ flapHigh=fScore; flapHighEl.textContent=flapHigh; saveHigh('flapHigh',flapHigh);} SOUND.beep(900,0.03); } });
+      // collision
+      if(bird.y < 0 || bird.y + bird.h > fCanvas.height) return flappyDie(); for(let p of pipes){ if(bird.x + bird.w > p.x && bird.x < p.x + 50){ if(bird.y < p.top || bird.y + bird.h > p.top + p.gap) return flappyDie(); } }
+      renderFlappy(); }
+    function flappyDie(){ fPlaying=false; flapMsg.textContent='You died'; SOUND.beep(200,0.14); clearInterval(fLoop); }
+    function flap(){ bird.vy = -7; SOUND.beep(1000,0.04); }
+    flapStart.addEventListener('click', ()=>{ if(fPlaying) return; fPlaying=true; if(fLoop) clearInterval(fLoop); spawnPipe(); fLoop=setInterval(flappyStep,20); SOUND.beep(700,0.04); });
+    flapReset.addEventListener('click', ()=>{ clearInterval(fLoop); flappyInit(); });
+    // input
+    fCanvas.addEventListener('click', ()=>{ if(fPlaying) flap(); }); document.addEventListener('keydown', e=>{ if(e.code==='Space'){ if(fPlaying) flap(); else{ /* optionally start */ } } }); flappyInit();
+
+    /* Autosave on unload */ window.addEventListener('beforeunload', ()=>{ saveHigh('snakeHigh',loadHigh('snakeHigh',0)); saveHigh('rpsHigh',loadHigh('rpsHigh',0)); saveHigh('memHigh',loadHigh('memHigh',null)); saveHigh('g2048High',loadHigh('g2048High',0)); saveHigh('breakHigh',loadHigh('breakHigh',0)); saveHigh('flapHigh',loadHigh('flapHigh',0)); saveHigh('tttWins',loadHigh('tttWins',{X:0,O:0})); saveHigh('guessHigh',loadHigh('guessHigh',0)); });
+
+    window.addEventListener('load', ()=>{ SOUND.beep(800,0.04); });
+  </script>
+</body>
+</html>
